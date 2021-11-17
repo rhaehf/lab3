@@ -1,5 +1,6 @@
 /* sendsignal.c */ 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
 int i = 0;
@@ -10,28 +11,29 @@ int main()
 	struct sigaction act;
 	pid = fork();
 	
-	if (pid == 0) {
-	act.sa_handler = c_handler;
-	sigaction (SIGUSR1, &act, NULL);
-	ppid = getppid(); /* get parent's process id. */
+	if (pid == 0) {		
+		act.sa_handler = c_handler;
+		sigaction (SIGUSR1, &act, NULL);
+		ppid = getppid(); /* get parent's process id. */
 	
-	while (1) {
-		sleep (1);
-		kill (ppid, SIGUSR1);
-		pause();
+		while (1) {
+			sleep (1);
+			kill (ppid, SIGUSR1);
+			pause();
+		}
+	} 
+	else if (pid > 0) {
+		act.sa_handler = p_handler;
+		sigaction(SIGUSR1, &act, NULL);
+		while (1) {
+			pause();
+			sleep (1);
+			kill (pid, SIGUSR1);
+		}
 	}
-} 
-else if (pid > 0) {
-	act.sa_handler = p_handler;
-	sigaction(SIGUSR1, &act, NULL);
-	while (1) {
-		pause();
-		sleep (1);
-		kill (pid, SIGUSR1);
-	}
-}else
-	perror ("Error");
-	}
+	else
+		perror ("Error");
+}
 
 void p_handler(int signo)
 {
